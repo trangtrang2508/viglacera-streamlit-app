@@ -1,107 +1,166 @@
-# pages/2_Cong_cu_Ho_tro.py
 import streamlit as st
 import pandas as pd
-import re #
+import re
+import base64
+from pathlib import Path
 
-st.title("Công cụ Hỗ trợ Ra quyết định 🛠️")
-st.write("Sử dụng các công cụ so sánh và ước tính để lựa chọn vật liệu tối ưu cho dự án của bạn.")
+# --- CSS TÙY CHỈNH CHO GIAO DIỆN ---
+st.markdown("""
+<style>
+    /* Thẻ so sánh sản phẩm */
+    .compare-card {
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 16px;
+        height: 100%;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+    }
+    .compare-card img {
+        width: 80%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        align-self: center;
+    }
+    .compare-card h5 {
+        font-weight: 700;
+        color: #0A488F;
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+        min-height: 44px; /* Đảm bảo chiều cao đồng nhất */
+    }
+    .compare-card hr {
+        margin-top: auto; /* Đẩy đường kẻ xuống dưới */
+        margin-bottom: 1rem;
+    }
+    .compare-card p {
+        font-size: 0.95rem;
+        color: #333;
+    }
+    /* Thẻ thông báo kết quả carbon được thiết kế lại */
+    .carbon-info-box {
+        background-color: #E8F5E9; /* Nền xanh lá nhạt */
+        color: #1B5E20; /* Chữ xanh lá đậm */
+        border: 1px solid #A5D6A7;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+        font-size: 0.95rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# --- HÀM HỖ TRỢ ---
+def get_image_as_base64(path):
+    try:
+        with open(path, "rb") as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except (FileNotFoundError, Exception):
+        return None
+
+def parse_emission(value):
+    """Hàm xử lý chuỗi hệ số phát thải và trả về một số."""
+    try:
+        he_so_str = str(value)
+        match = re.match(r'^[0-9.\-–]+', he_so_str)
+        if not match: return None
+        clean_str = match.group(0).replace('–', '-')
+        if '-' in clean_str:
+            low, high = map(float, clean_str.split('-'))
+            return (low + high) / 2
+        else:
+            return float(clean_str)
+    except: return None
 
 @st.cache_data
 def load_products():
     try:
-        return pd.read_csv("data/products.csv")
+        return pd.read_csv("data/products.csv", encoding='utf-8')
     except FileNotFoundError:
         st.error("Không tìm thấy file 'products.csv' trong thư mục 'data'.")
         return pd.DataFrame()
+
+# --- GIAO DIỆN CHÍNH ---
+st.title("Công cụ Hỗ trợ Ra quyết định 🛠️")
+st.write("Sử dụng các công cụ so sánh và ước tính để lựa chọn vật liệu tối ưu cho dự án của bạn.")
 
 products_df = load_products()
 
 if not products_df.empty:
     product_list = products_df['Ten_san_pham'].tolist()
 
-    # --- Công cụ so sánh sản phẩm ---
-    st.subheader("Công cụ So sánh Sản phẩm")
-    st.markdown("Chọn hai hoặc ba sản phẩm để so sánh các thông số kỹ thuật và chứng nhận.")
+    # --- CÔNG CỤ SO SÁNH SẢN PHẨM ---
+    with st.container():
+        st.subheader("So sánh Sản phẩm")
+        st.markdown("Chọn hai hoặc ba sản phẩm để so sánh các thông số kỹ thuật và chứng nhận.")
+        
+        compare_products = st.multiselect(
+            "Chọn sản phẩm để so sánh:",
+            options=product_list,
+            max_selections=3
+        )
 
-    compare_products = st.multiselect(
-        "Chọn sản phẩm để so sánh:",
-        options=product_list,
-        max_selections=3, # Cho phép so sánh tối đa 3 sản phẩm
-        key="compare_selector"
-    )
+        if len(compare_products) >= 2:
+            comparison_df = products_df[products_df['Ten_san_pham'].isin(compare_products)]
+            cols = st.columns(len(compare_products))
 
-    if len(compare_products) >= 2:
-        comparison_df = products_df[products_df['Ten_san_pham'].isin(compare_products)]
-        # Chọn các cột quan trọng để hiển thị khi so sánh
-        display_cols = ['Ten_san_pham', 'Loai_vat_lieu', 'Chung_nhan', 'He_so_phat_thai', 'Mo_ta_ngan']
-        st.table(comparison_df[display_cols].T.reset_index().rename(columns={'index': 'Thông số'}))
-    elif len(compare_products) == 1:
-        st.info("Vui lòng chọn ít nhất hai sản phẩm để so sánh.")
-    else:
-        st.info("Chọn sản phẩm từ danh sách trên để bắt đầu so sánh.")
+            for i, product_name in enumerate(compare_products):
+                with cols[i]:
+                    product_data = comparison_df[comparison_df['Ten_san_pham'] == product_name].iloc[0]
+                    image_path = Path(f"images/{product_data['Link_Hinh_anh']}")
+                    img_base64 = get_image_as_base64(image_path)
+                    
+                    img_html = (f'<img src="data:image/png;base64,{img_base64}" alt="{product_data["Ten_san_pham"]}">' if img_base64 
+                                else '<div style="height: 150px; display:flex; align-items:center; justify-content:center; background-color:#f0f2f6; border-radius:6px;">No Image</div>')
 
+                    st.markdown(f"""
+                    <div class="compare-card">
+                        {img_html}
+                        <h5>{product_data['Ten_san_pham']}</h5>
+                        <hr>
+                        <p><strong>Loại vật liệu:</strong><br>{product_data['Loai_vat_lieu']}</p>
+                        <p><strong>Chứng nhận:</strong><br>{product_data['Chung_nhan']}</p>
+                        <p><strong>Hệ số phát thải:</strong><br>{product_data['He_so_phat_thai']}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-    st.markdown("---")
+    st.markdown("<br><br>", unsafe_allow_html=True)
 
-    # --- Công cụ ước tính "Dấu chân carbon" ---
-    st.subheader("Công cụ Ước tính Dấu chân Carbon")
-    st.markdown("Ước tính sơ bộ lượng phát thải CO2 của vật liệu dựa trên diện tích sử dụng.")
+    # --- CÔNG CỤ ƯỚC TÍNH "DẤU CHÂN CARBON" ---
+    with st.container(border=True):
+        st.subheader("Ước tính Dấu chân Carbon")
+        st.markdown("Ước tính sơ bộ lượng phát thải CO2 của vật liệu dựa trên diện tích sử dụng.")
 
-    selected_product_carbon = st.selectbox(
-        "Chọn vật liệu cần ước tính:",
-        options=product_list,
-        key="carbon_selector"
-    )
-    area = st.number_input(
-        "Nhập diện tích sử dụng (m²):",
-        min_value=1.0,
-        value=100.0,
-        step=10.0,
-        key="area_input"
-    )
+        col1, col2 = st.columns(2)
+        with col1:
+            selected_product_carbon = st.selectbox("Chọn vật liệu cần ước tính:", options=product_list)
+        with col2:
+            area = st.number_input("Nhập diện tích sử dụng (m²):", min_value=1.0, value=100.0, step=10.0)
 
-    if st.button("Ước tính Dấu chân Carbon", key="calculate_carbon"):
-        product_info = products_df[products_df['Ten_san_pham'] == selected_product_carbon]
-        if not product_info.empty:
-            he_so_value = product_info['He_so_phat_thai'].iloc[0]
+        if st.button("Ước tính ngay", type="primary", use_container_width=True):
+            product_info = products_df[products_df['Ten_san_pham'] == selected_product_carbon].iloc[0]
+            he_so_value = product_info['He_so_phat_thai']
+            he_so_numeric = parse_emission(he_so_value)
 
-            if pd.notna(he_so_value):
-                try:
-                    he_so_numeric = 0
-                    he_so_str = str(he_so_value).strip() # Chuyển thành chuỗi và xóa khoảng trắng thừa
-
-                    # Bước 1: Chỉ trích xuất phần số và dấu gạch ở đầu chuỗi
-                    match = re.match(r'^[0-9.\-–]+', he_so_str)
-                    if not match:
-                        raise ValueError("Không tìm thấy dữ liệu số hợp lệ.")
-
-                    clean_str = match.group(0)
-
-                    # Bước 2: Chuẩn hóa các loại dấu gạch ngang thành 1 loại duy nhất
-                    normalized_str = clean_str.replace('–', '-')
-
-                    # Bước 3: Tính toán như cũ với chuỗi đã được làm sạch
-                    if '-' in normalized_str:
-                        parts = normalized_str.split('-')
-                        if len(parts) != 2: # Đảm bảo chỉ có 2 phần
-                            raise ValueError("Khoảng số không hợp lệ.")
-                        low, high = map(float, parts)
-                        he_so_numeric = (low + high) / 2
-                        st.info(f"Hệ số phát thải là một khoảng ({clean_str}). Tạm tính giá trị trung bình là {he_so_numeric:.2f} để ước tính.")
-                    else:
-                        he_so_numeric = float(normalized_str)
-
-                    # Thực hiện phép tính
-                    total_co2 = area * he_so_numeric
-                    st.success(f"**Lượng phát thải CO2 ước tính cho {area} m² {selected_product_carbon}:** **{total_co2:.2f} kg CO2**")
-                    st.info("Lưu ý: Đây là ước tính sơ bộ. Để có con số chính xác, vui lòng tham khảo tài liệu kỹ thuật chi tiết.")
-
-                except (ValueError, TypeError):
-                    st.warning(f"Không thể tính toán. Dữ liệu hệ số phát thải '{he_so_value}' không hợp lệ.")
+            if he_so_numeric is not None:
+                total_co2 = area * he_so_numeric
+                trees_equivalent = total_co2 / 22 
+                
+                st.metric(label="Tổng phát thải CO2 ước tính", value=f"{total_co2:.2f} kg CO2")
+                
+                # SỬA LỖI: Sử dụng thẻ div tùy chỉnh thay cho st.info
+                st.markdown(f"""
+                <div class="carbon-info-box">
+                    💡 Con số này tương đương với lượng CO2 mà khoảng <strong>{trees_equivalent:.1f} cây xanh</strong> hấp thụ trong một năm.
+                </div>
+                """, unsafe_allow_html=True)
             else:
-                st.warning("Không có hệ số phát thải cho sản phẩm này.")
-        else:
-            st.error("Sản phẩm không hợp lệ.")
-
+                st.warning(f"Không thể tính toán. Dữ liệu hệ số phát thải '{he_so_value}' không hợp lệ hoặc không có.")
 else:
     st.info("Vui lòng tải lên file 'products.csv' để sử dụng các công cụ.")
+

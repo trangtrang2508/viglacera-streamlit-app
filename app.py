@@ -1,40 +1,117 @@
-# app.py
 import streamlit as st
 
-# Cấu hình trang (tiêu đề, icon, layout)
+# --- CẤU HÌNH TRANG ---
 st.set_page_config(
     page_title="Viglacera VLXD Xanh",
     page_icon="🌱",
-    layout="wide", # Có thể là "centered" hoặc "wide"
-    initial_sidebar_state="expanded" # Để sidebar mở mặc định
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# Tiêu đề chính của trang chủ
-st.title("Chào mừng đến với Cổng thông tin Vật liệu Xây dựng Xanh Viglacera 🌱")
+# --- CSS TÙY CHỈNH CHO GIAO DIỆN ---
+st.markdown("""
+<style>
+    /* Link bao quanh thẻ */
+    a.card-link {
+        text-decoration: none; /* Bỏ gạch chân của link */
+    }
+    /* Thẻ tính năng */
+    .feature-card {
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%; /* Đảm bảo các thẻ có chiều cao bằng nhau */
+    }
+    a.card-link:hover .feature-card { /* Hiệu ứng khi di chuột vào link */
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+    .feature-card .icon {
+        font-size: 3rem;
+        color: #00A99D; /* Màu xanh lá cây */
+    }
+    .feature-card h3 {
+        color: #0A488F; /* Màu xanh dương */
+        margin-top: 15px;
+        font-size: 1.5rem;
+    }
+    /* Sửa lỗi màu chữ trắng */
+    .feature-card p {
+        color: #31333F; 
+    }
+</style>
+""", unsafe_allow_html=True)
 
-# Hình ảnh minh họa (thay thế URL ảnh nếu có ảnh thật)
-st.image("https://via.placeholder.com/900x400/008000/FFFFFF?text=Viglacera+Green+Building+Materials", use_container_width=True)
+# --- HEADER ---
+col1, col2 = st.columns([0.6, 0.4])
+with col1:
+    st.title("Cổng thông tin Vật liệu Xây dựng Xanh Viglacera 🌱")
+    st.write(
+        """
+        Nền tảng cung cấp thông tin minh bạch và đáng tin cậy về các sản phẩm Vật liệu Xây dựng Xanh (VLXD Xanh)
+        của Viglacera, hỗ trợ bạn đưa ra quyết định xây dựng bền vững và hiệu quả.
+        
+        **Khám phá ngay các công cụ và tài nguyên hữu ích của chúng tôi!**
+        """
+    )
+with col2:
+    st.image("https://placehold.co/900x500/E8F5E9/0A488F?text=Viglacera+Green+Innovation&font=raleway", use_container_width=True)
 
-# Đoạn giới thiệu
-st.write(
-    """
-    Nền tảng cung cấp thông tin minh bạch và đáng tin cậy về các sản phẩm Vật liệu Xây dựng Xanh (VLXD Xanh)
-    của Viglacera, hỗ trợ bạn đưa ra quyết định xây dựng bền vững và hiệu quả.
+st.divider()
 
-    Chúng tôi cam kết mang đến những giải pháp vật liệu tiên tiến, thân thiện môi trường,
-    đáp ứng các tiêu chuẩn khắt khe nhất về bền vững.
+# --- CÁC TÍNH NĂNG CHÍNH ---
+st.subheader("Khám phá Nền tảng")
+cols = st.columns(3)
+with cols[0]:
+    # Sửa href: Dùng tên file không dấu
+    st.markdown("""
+    <a href="Thu_vien_San_pham" target="_self" class="card-link">
+        <div class="feature-card">
+            <div class="icon">📚</div>
+            <h3>Thư viện Sản phẩm</h3>
+            <p>Tra cứu thông tin chi tiết, thông số kỹ thuật và chứng nhận của hàng loạt sản phẩm VLXD Xanh.</p>
+        </div>
+    </a>
+    """, unsafe_allow_html=True)
 
-    Sử dụng menu bên trái để khám phá các tính năng của cổng thông tin!
-    """
-)
+with cols[1]:
+    # Sửa href: Dùng tên file không dấu
+    st.markdown("""
+    <a href="Cong_cu_Ho_tro" target="_self" class="card-link">
+        <div class="feature-card">
+            <div class="icon">🛠️</div>
+            <h3>Công cụ Hỗ trợ</h3>
+            <p>So sánh các sản phẩm và ước tính dấu chân carbon để đưa ra lựa chọn vật liệu tối ưu cho dự án của bạn.</p>
+        </div>
+    </a>
+    """, unsafe_allow_html=True)
 
-st.markdown("---") # Đường phân cách
+with cols[2]:
+    # Sửa href: Dùng tên file không dấu
+    st.markdown("""
+    <a href="Thong_tin_Ket_noi" target="_self" class="card-link">
+        <div class="feature-card">
+            <div class="icon">🌐</div>
+            <h3>Kết nối & Hỗ trợ</h3>
+            <p>Tìm kiếm nhà phân phối trên bản đồ, khám phá thư viện tri thức và nhận tư vấn trực tiếp từ chatbot.</p>
+        </div>
+    </a>
+    """, unsafe_allow_html=True)
+
+st.divider()
+
+# --- VỀ VIGLACERA ---
 st.subheader("Về Viglacera và Cam kết Xanh")
 st.write(
     """
-    Viglacera tự hào là doanh nghiệp tiên phong trong lĩnh vực sản xuất VLXD xanh tại Việt Nam.
+    **Tổng công ty Viglacera - CTCP** tự hào là doanh nghiệp tiên phong trong lĩnh vực sản xuất VLXD xanh tại Việt Nam.
     Với kinh nghiệm và hệ thống nhà máy hiện đại, chúng tôi không ngừng nghiên cứu và phát triển
-    các sản phẩm chất lượng cao, giảm thiểu tác động đến môi trường.
+    các sản phẩm chất lượng cao, giảm thiểu tác động đến môi trường, góp phần xây dựng một tương lai bền vững.
     """
 )
-st.info("Tìm hiểu thêm về Viglacera tại trang Giới thiệu & Liên hệ.")
+st.page_link("pages/4_Tuong_tac_Ho_tro.py", label="Tìm hiểu thêm và Liên hệ với chúng tôi", icon="➡️")
+
