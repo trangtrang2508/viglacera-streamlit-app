@@ -80,12 +80,20 @@ st.markdown("""
     
     /* Giao diện trang chi tiết sản phẩm */
     .product-detail-image { border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .download-section a {
-        display: inline-block; margin-right: 15px; margin-bottom: 10px;
-        text-decoration: none; padding: 8px 15px; border-radius: 5px;
-        background-color: #F0F2F6; color: #31333F; border: 1px solid #E0E0E0;
+    
+    /* CSS Mới cho nút tải xuống */
+    .stDownloadButton>button {
+        width: 100%;
+        background-color: #F0F2F6;
+        color: #31333F;
+        border: 1px solid #E0E0E0;
+        font-weight: 600;
     }
-    .download-section a:hover { background-color: #E0E0E0; }
+    .stDownloadButton>button:hover {
+        background-color: #E0E0E0;
+        border-color: #BDBDBD;
+        color: #31333F;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -138,20 +146,38 @@ def display_product_details(product_id):
         - **Hệ số phát thải:** {product['He_so_phat_thai']}
         """)
         
+        # --- BẮT ĐẦU PHẦN THAY ĐỔI ---
         st.subheader("Tài liệu")
-        pdf_link = product['Link_PDF'] if pd.notna(product['Link_PDF']) else None
+        
+        pdf_filename = product['Link_PDF'] if pd.notna(product['Link_PDF']) else None
         bim_link = product['Link_BIM_CAD'] if 'Link_BIM_CAD' in product and pd.notna(product['Link_BIM_CAD']) else None
         
-        download_html = ""
-        if pdf_link:
-            download_html += f'<a href="{pdf_link}" target="_blank">📄 Tải PDF</a>'
-        if bim_link:
-            download_html += f'<a href="{bim_link}" target="_blank">📦 Tải BIM/CAD</a>'
+        has_downloads = False
+        dl_col1, dl_col2 = st.columns(2)
+
+        # Xử lý nút tải PDF từ file cục bộ
+        if pdf_filename:
+            pdf_path = Path(f"pdf/{pdf_filename}")
+            if pdf_path.is_file():
+                with open(pdf_path, "rb") as f:
+                    pdf_bytes = f.read()
+                dl_col1.download_button(
+                    label="📄 Tải PDF",
+                    data=pdf_bytes,
+                    file_name=pdf_filename,
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+                has_downloads = True
         
-        if download_html:
-            st.markdown(f'<div class="download-section">{download_html}</div>', unsafe_allow_html=True)
-        else:
+        # Giữ nguyên nút link cho BIM/CAD (vì thường là link ngoài)
+        if bim_link:
+            dl_col2.link_button("📦 Tải BIM/CAD", url=bim_link, use_container_width=True)
+            has_downloads = True
+            
+        if not has_downloads:
             st.info("Chưa có tài liệu để tải về.")
+        # --- KẾT THÚC PHẦN THAY ĐỔI ---
 
 
 # --- HÀM HIỂN THỊ LƯỚI SẢN PHẨM ---

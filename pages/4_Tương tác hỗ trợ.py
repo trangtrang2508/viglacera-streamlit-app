@@ -1,10 +1,9 @@
 import streamlit as st
 import time
+import requests # Thư viện để gọi API
 
-# --- SIDEBAR ---
-# Sử dụng with st.sidebar để thêm nội dung vào thanh bên trái
+# --- SIDEBAR (Để đồng bộ giao diện) ---
 with st.sidebar:
-    # Bạn có thể thay thế link này bằng đường dẫn tới logo của bạn trong thư mục /images
     st.image("images/download.png", use_container_width=True)
     st.title("Về Viglacera Xanh")
     st.markdown("""
@@ -12,9 +11,8 @@ with st.sidebar:
     """)
     st.divider()
     st.markdown("🔗 **Liên kết hữu ích**")
-    # Link đến trang web chính thức của Viglacera
     st.link_button("Trang chủ Viglacera 🏠", "https://viglacera.com.vn/", use_container_width=True)
-    # Link đến trang liên hệ trong ứng dụng của bạn
+    # QUAN TRỌNG: Đảm bảo tên file này khớp chính xác với file trong thư mục 'pages' của bạn.
     st.page_link("pages/4_Tương tác hỗ trợ.py", label="Liên hệ chúng tôi ✉️", use_container_width=True)
 
 # --- CSS TÙY CHỈNH CHO GIAO DIỆN ---
@@ -27,22 +25,13 @@ st.markdown("""
         border-radius: 10px;
         padding: 25px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        height: 100%; /* Giúp 2 cột bằng nhau */
     }
-    /* Cải thiện giao diện nút bấm trong form */
-    .contact-container .stButton>button {
-        width: 100%;
-        border-radius: 8px;
-        background-color: #0A488F;
-        color: #FFFFFF;
-        border: none;
-        padding: 10px 0;
-        transition: background-color 0.3s ease;
-    }
-    .contact-container .stButton>button:hover {
-        background-color: #00A99D;
-    }
-    /* Nút gợi ý của chatbot */
-    .stButton>button.suggestion-button {
+    .contact-container .stButton>button { width: 100%; border-radius: 8px; background-color: #0A488F; color: #FFFFFF; border: none; padding: 10px 0; transition: background-color 0.3s ease; }
+    .contact-container .stButton>button:hover { background-color: #00A99D; }
+    
+    /* Container cho các nút gợi ý */
+    .suggestion-container .stButton>button {
         border-radius: 20px;
         padding: 4px 12px;
         font-size: 0.85rem;
@@ -51,8 +40,9 @@ st.markdown("""
         color: #0A488F;
         transition: all 0.3s ease;
         font-weight: 600;
+        width: 100%;
     }
-    .stButton>button.suggestion-button:hover {
+    .suggestion-container .stButton>button:hover {
         background-color: #F0F2F6;
         border-color: #00A99D;
         color: #00A99D;
@@ -61,56 +51,68 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# --- HÀM LOGIC CHO CHATBOT (KỊCH BẢN NÂNG CẤP) ---
-def get_basic_response(user_input):
+# --- HÀM LOGIC MỚI CHO CHATBOT (SỬ DỤNG GEMINI API) ---
+@st.cache_data(show_spinner=False)
+def get_ai_response(user_input, chat_history):
     """
-    Phân tích input của người dùng và trả về một câu trả lời dựa trên kịch bản chi tiết.
+    Gửi yêu cầu đến Gemini API và nhận phản hồi từ AI, với khả năng xử lý lỗi chi tiết.
     """
-    normalized_input = user_input.lower()
+    if "GEMINI_API_KEY" not in st.secrets:
+        return "Lỗi cấu hình: Không tìm thấy `GEMINI_API_KEY`. Vui lòng tạo file `.streamlit/secrets.toml` và thêm key của bạn vào đó."
+        
+    api_key = st.secrets.get("GEMINI_API_KEY")
+    
+    if not api_key or api_key == "YOUR_API_KEY_HERE":
+        return "Lỗi cấu hình: Giá trị của `GEMINI_API_KEY` đang bị trống. Vui lòng kiểm tra lại file `.streamlit/secrets.toml`."
 
-    # Nhóm 1: Câu hỏi về sản phẩm cụ thể
-    if "gạch aac" in normalized_input or "bê tông khí" in normalized_input:
-        return "Gạch bê tông khí chưng áp (AAC) của Viglacera là sản phẩm trọng lượng nhẹ, giúp giảm tải trọng công trình. Nó còn có khả năng cách âm, cách nhiệt và chống cháy vượt trội. Bạn có muốn biết về ứng dụng của nó không?"
-    if "kính tiết kiệm năng lượng" in normalized_input or "kính low-e" in normalized_input:
-        return "Kính tiết kiệm năng lượng (Low-E) của Viglacera giúp ngăn chặn sự truyền nhiệt từ môi trường bên ngoài, giữ cho không gian bên trong mát mẻ vào mùa hè và ấm áp vào mùa đông, từ đó giúp tiết kiệm đáng kể chi phí điện cho điều hòa."
-    if "gạch ốp lát" in normalized_input or "gạch granite" in normalized_input:
-        return "Viglacera có rất nhiều dòng gạch ốp lát với mẫu mã đa dạng. Các sản phẩm đều được sản xuất trên dây chuyền công nghệ xanh, đảm bảo độ bền và an toàn cho sức khỏe. Bạn có thể khám phá tất cả mẫu mã trong 'Thư viện Sản phẩm'."
+    # Sửa lại API URL cho chính xác
+    api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key={api_key}"
+    
+    # Hoàn thiện kịch bản cho AI
+    system_prompt = """
+    Bạn là một trợ lý ảo am hiểu và chuyên nghiệp của Tổng công ty Viglacera. 
+    Vai trò của bạn là tư vấn cho khách hàng về các sản phẩm vật liệu xây dựng (VLXD) xanh của Viglacera.
+    - Tông giọng: Thân thiện, chuyên nghiệp, và hữu ích.
+    - Kiến thức: Chỉ tập trung vào các sản phẩm của Viglacera như Gạch bê tông khí chưng áp (AAC), Kính tiết kiệm năng lượng (Low-E), Gạch ốp lát, thiết bị vệ sinh, v.v. và các khái niệm liên quan đến xây dựng xanh.
+    - Quy tắc: 
+      1. KHÔNG trả lời các câu hỏi không liên quan đến Viglacera hoặc VLXD. Nếu được hỏi, hãy lịch sự trả lời: "Tôi là trợ lý ảo của Viglacera và chỉ có thể cung cấp thông tin về các sản phẩm và giải pháp của chúng tôi."
+      2. KHÔNG bịa đặt thông tin. Nếu không biết câu trả lời, hãy nói: "Đây là một câu hỏi rất hay. Để có câu trả lời chính xác nhất, bạn vui lòng điền thông tin vào form liên hệ bên cạnh, chuyên viên của chúng tôi sẽ hỗ trợ bạn."
+      3. Giữ câu trả lời ngắn gọn, dễ hiểu.
+      4. Khi được hỏi về "giá" hoặc "mua ở đâu", hãy hướng dẫn người dùng đến trang "Thông tin & Kết nối" hoặc liên hệ nhà phân phối.
+    """
+    
+    history_for_api = []
+    for message in chat_history:
+        role = "user" if message["role"] == "user" else "model"
+        history_for_api.append({"role": role, "parts": [{"text": message["content"]}]})
 
-    # Nhóm 2: Câu hỏi về đặc tính kỹ thuật & "xanh"
-    elif "hệ số phát thải" in normalized_input or "dấu chân carbon" in normalized_input:
-        return "Hệ số phát thải (Carbon Footprint) là chỉ số đo lường tổng lượng khí nhà kính phát thải trong suốt vòng đời sản phẩm. Sản phẩm có hệ số càng thấp thì càng thân thiện với môi trường. Bạn có thể dùng 'Công cụ Hỗ trợ' để ước tính chỉ số này cho từng sản phẩm."
-    elif "bền vững" in normalized_input or "thân thiện môi trường" in normalized_input:
-        return "Tính bền vững là cốt lõi trong các sản phẩm của Viglacera. Chúng tôi ưu tiên sử dụng vật liệu tái chế, quy trình sản xuất tiết kiệm năng lượng và giảm thiểu phát thải CO2. Các chứng nhận xanh là minh chứng rõ nhất cho cam kết này."
-    elif "chứng nhận" in normalized_input or "chứng chỉ" in normalized_input:
-        return "Các sản phẩm xanh của chúng tôi đạt nhiều chứng nhận uy tín như TCVN, QCVN, Nhãn Xanh Singapore, và kiểm định PCCC của Bộ Công An. Mỗi sản phẩm trong 'Thư viện Sản phẩm' đều có ghi rõ các chứng nhận đạt được."
+    payload = {
+        "contents": [*history_for_api, {"role": "user", "parts": [{"text": user_input}]}],
+        "systemInstruction": {"parts": [{"text": system_prompt}]},
+    }
+    headers = {'Content-Type': 'application/json'}
+    
+    try:
+        response = requests.post(api_url, headers=headers, json=payload, timeout=20)
+        response.raise_for_status() 
+        result = response.json()
+        
+        if "error" in result:
+             return f"Lỗi từ API: {result['error']['message']}"
 
-    # Nhóm 3: Câu hỏi về thương mại và hỗ trợ
-    elif "giá" in normalized_input or "báo giá" in normalized_input:
-        return "Cảm ơn bạn đã quan tâm! Để nhận báo giá chính xác và tốt nhất, vui lòng liên hệ trực tiếp với các nhà phân phối chính hãng của chúng tôi. Bạn có thể tìm nhà phân phối gần nhất tại trang 'Thông tin & Kết nối'."
-    elif "mua ở đâu" in normalized_input or "nhà phân phối" in normalized_input or "đại lý" in normalized_input:
-        return "Bạn có thể tìm kiếm các đại lý và nhà phân phối của Viglacera trên toàn quốc tại trang 'Thông tin & Kết nối'. Trang đó có một bản đồ tương tác và danh sách chi tiết để bạn dễ dàng liên hệ!"
-    elif "liên hệ" in normalized_input or "hỗ trợ" in normalized_input:
-        return "Bạn có thể sử dụng form liên hệ ở ngay bên cạnh để gửi yêu cầu hỗ trợ trực tiếp cho chúng tôi. Đội ngũ Viglacera sẽ phản hồi bạn trong thời gian sớm nhất."
+        candidate = result.get("candidates", [{}])[0]
+        if candidate.get("finishReason") == "SAFETY":
+            return "Rất tiếc, câu hỏi của bạn đã vi phạm chính sách an toàn và không thể được trả lời."
 
-    # Nhóm 4: Lời chào và các câu hỏi chung
-    elif "chào" in normalized_input or "hello" in normalized_input:
-        return "Chào bạn! Tôi là chatbot tư vấn của Viglacera. Tôi có thể giúp gì cho bạn về các sản phẩm và giải pháp vật liệu xây dựng xanh?"
-    else:
-        # Câu trả lời mặc định
-        return "Cảm ơn câu hỏi của bạn! Đây là một vấn đề chuyên sâu. Để được tư vấn tốt nhất, bạn vui lòng điền thông tin vào form liên hệ bên cạnh, chuyên viên của chúng tôi sẽ hỗ trợ bạn chi tiết hơn."
+        text_part = candidate.get("content", {}).get("parts", [{}])[0]
+        return text_part.get("text", "Xin lỗi, tôi chưa thể trả lời câu hỏi này. Vui lòng thử lại sau.")
 
-# --- HÀM XỬ LÝ GỬI TIN NHẮN ---
-def send_message(message):
-    st.session_state.messages.append({"role": "user", "content": message})
-    with st.chat_message("user"):
-        st.markdown(message)
-
-    with st.chat_message("assistant"):
-        with st.spinner("Đang nghĩ..."):
-            time.sleep(1)
-            response = get_basic_response(message)
-        st.markdown(response)
-    st.session_state.messages.append({"role": "assistant", "content": response})
+    except requests.exceptions.HTTPError as err:
+        return f"Lỗi HTTP {err.response.status_code}: Yêu cầu đến server thất bại. Rất có thể **API Key của bạn không hợp lệ** hoặc đã hết hạn. Vui lòng kiểm tra lại."
+    except requests.exceptions.RequestException:
+        return "Lỗi kết nối mạng. Vui lòng kiểm tra lại kết nối Internet của bạn."
+    except (KeyError, IndexError):
+        return "Rất tiếc, tôi nhận được phản hồi không hợp lệ từ server. Vui lòng thử lại."
 
 # --- GIAO DIỆN CHÍNH ---
 st.title("Tương tác và Hỗ trợ 💬")
@@ -119,34 +121,46 @@ st.write("Kết nối với chúng tôi qua chatbot hoặc gửi phản hồi tr
 col1, col2 = st.columns([0.6, 0.4])
 
 with col1:
-    # --- HỆ THỐNG TƯ VẤN ẢO (AI CHATBOT) ---
     st.subheader("Chatbot tư vấn Viglacera")
 
-    # Khởi tạo lịch sử tin nhắn
     if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "assistant", "content": "Chào bạn! Tôi có thể giúp gì cho bạn về các sản phẩm vật liệu xây dựng xanh của Viglacera?"}]
+        st.session_state.messages = [{"role": "assistant", "content": "Chào bạn! Tôi là trợ lý ảo của Viglacera. Tôi có thể giúp gì cho bạn?"}]
 
-    # Hiển thị các tin nhắn cũ
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
-
-    # Input từ người dùng
+    
+    # Hợp nhất logic xử lý input
+    user_input = None
     if prompt := st.chat_input("Bạn có câu hỏi gì?"):
-        send_message(prompt)
+        user_input = prompt
 
-    # Các nút gợi ý
-    st.markdown("Gợi ý:")
-    suggestions = ["Ưu điểm gạch AAC?", "Tìm nhà phân phối ở đâu?", "Sản phẩm có bền vững không?"]
-    s_cols = st.columns(len(suggestions))
-    for i, suggestion in enumerate(suggestions):
-        if s_cols[i].button(suggestion, key=f"suggestion_{i}", use_container_width=True):
-            # Sử dụng CSS class để tùy chỉnh nút
-            st.markdown(f'<style>.stButton>button[key="suggestion_{i}"] {{ { " ".join( "suggestion-button".split()) } }}</style>', unsafe_allow_html=True)
-            send_message(suggestion)
+    st.write("Hoặc thử một trong các câu hỏi sau:")
+    # Bọc các nút gợi ý trong container để áp dụng CSS
+    with st.container():
+        st.markdown('<div class="suggestion-container">', unsafe_allow_html=True)
+        suggestions = ["Ưu điểm gạch AAC?", "Kính Low-E là gì?", "Tìm nhà phân phối ở đâu?"]
+        s_cols = st.columns(len(suggestions))
+        for i, suggestion in enumerate(suggestions):
+            if s_cols[i].button(suggestion, key=f"suggestion_{i}"):
+                user_input = suggestion
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # Xử lý input sau khi đã nhận
+    if user_input:
+        st.session_state.messages.append({"role": "user", "content": user_input})
+        with st.chat_message("user"):
+            st.markdown(user_input)
+
+        with st.chat_message("assistant"):
+            with st.spinner("Vui lòng chờ giây lát..."):
+                response = get_ai_response(user_input, st.session_state.messages[:-1])
+            st.markdown(response)
+        
+        st.session_state.messages.append({"role": "assistant", "content": response})
+        st.rerun()
 
 with col2:
-    # --- TRANG GIỚI THIỆU & LIÊN HỆ ---
     st.markdown('<div class="contact-container">', unsafe_allow_html=True)
     st.subheader("Giới thiệu & Liên hệ")
     st.write(
@@ -157,7 +171,6 @@ with col2:
         """
     )
     
-    # Form liên hệ
     with st.form("contact_form", clear_on_submit=True):
         st.write("##### Gửi phản hồi cho chúng tôi")
         name = st.text_input("Tên của bạn:", placeholder="Nguyễn Văn A")
