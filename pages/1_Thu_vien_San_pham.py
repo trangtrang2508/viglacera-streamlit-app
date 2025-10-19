@@ -27,31 +27,40 @@ st.markdown("""
         height: 100%; 
         display: flex; 
         flex-direction: column;
-        /* THÊM VÀO: Đảm bảo chiều cao tối thiểu để các thẻ luôn đều nhau */
         min-height: 450px; 
     }
     .product-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
     .product-card img { width: 100%; height: 180px; object-fit: cover; border-radius: 6px; margin-bottom: 16px; }
+    
+    /* --- THAY ĐỔI MÀU SẮC Ở ĐÂY --- */
     .product-card h5 {
-        font-weight: 700; color: #0A488F; font-size: 1.1rem; margin-bottom: 8px;
+        font-weight: 700; 
+        color: #55853d; /* Đổi sang màu xanh Google */
+        font-size: 1.1rem; margin-bottom: 8px;
         display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
         overflow: hidden; text-overflow: ellipsis; 
-        /* Đặt chiều cao cố định cho vùng tiêu đề */
         min-height: 2.5em; 
     }
+
     .product-card p {
         color: #555555; font-size: 0.9rem; 
-        /* Quan trọng: Cho phép đoạn mô tả co giãn để đẩy nút bấm xuống dưới cùng */
         flex-grow: 1;
         display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
         overflow: hidden; text-overflow: ellipsis;
     }
+
+    /* --- THAY ĐỔI MÀU SẮC Ở ĐÂY --- */
     .view-details-button {
-        display: block; padding: 10px 18px; background-color: #0A488F; color: white !important;
+        display: block; padding: 10px 18px; 
+        background-color: #55853d; /* Đổi sang màu xanh Google */
+        color: white !important;
         text-align: center; border-radius: 5px; text-decoration: none; margin-top: 16px;
         font-weight: 600; transition: background-color 0.3s ease;
     }
-    .view-details-button:hover { background-color: #083A75; color: white !important; }
+    .view-details-button:hover { 
+        background-color: #1a73e8; /* Đổi sang màu xanh Google đậm hơn */
+        color: white !important; 
+    }
     
     /* Giao diện trang chi tiết sản phẩm */
     .product-detail-image { border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -69,7 +78,6 @@ st.markdown("""
 @st.cache_data
 def load_products():
     try:
-        # Giả sử tên cột trong CSV không có dấu cách
         return pd.read_csv("data/products.csv", encoding='utf-8')
     except FileNotFoundError:
         st.error("Không tìm thấy file 'products.csv' trong thư mục 'data'.")
@@ -79,10 +87,8 @@ products_df = load_products()
 
 # --- HÀM HIỂN THỊ TRANG CHI TIẾT SẢN PHẨM ---
 def display_product_details(product_id):
-    # Sử dụng tên cột không dấu cách để khớp với giả định
     product = products_df[products_df['ID'] == product_id].iloc[0]
 
-    # Sửa lỗi: Dùng st.button với callback để quay lại
     st.button("⬅️ Quay lại Thư viện sản phẩm", on_click=go_back_to_library)
     
     st.title(product["Ten_san_pham"])
