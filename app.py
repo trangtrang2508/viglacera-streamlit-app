@@ -39,7 +39,6 @@ st.markdown("""
         margin-top: 15px;
         font-size: 1.5rem;
     }
-    /* Sửa lỗi màu chữ trắng */
     .feature-card p {
         color: #31333F; 
     }
@@ -59,7 +58,10 @@ with col1:
         """
     )
 with col2:
-    st.image("https://placehold.co/900x500/E8F5E9/0A488F?text=Viglacera+Green+Innovation&font=raleway", use_container_width=True)
+    # --- THAY ĐỔI Ở ĐÂY ---
+    # Thay thế URL bằng đường dẫn đến file ảnh cục bộ của bạn.
+    # Hãy chắc chắn bạn có file "trang-chu-banner.png" trong thư mục "images".
+    st.image("images/banner-phat-trien-ben-vung.jpg", use_container_width=True)
 
 st.divider()
 
@@ -67,7 +69,6 @@ st.divider()
 st.subheader("Khám phá Nền tảng")
 cols = st.columns(3)
 with cols[0]:
-    # Sửa href: Dùng tên file không dấu
     st.markdown("""
     <a href="Thu_vien_San_pham" target="_self" class="card-link">
         <div class="feature-card">
@@ -79,7 +80,6 @@ with cols[0]:
     """, unsafe_allow_html=True)
 
 with cols[1]:
-    # Sửa href: Dùng tên file không dấu
     st.markdown("""
     <a href="Cong_cu_Ho_tro" target="_self" class="card-link">
         <div class="feature-card">
@@ -91,7 +91,6 @@ with cols[1]:
     """, unsafe_allow_html=True)
 
 with cols[2]:
-    # Sửa href: Dùng tên file không dấu
     st.markdown("""
     <a href="Thong_tin_Ket_noi" target="_self" class="card-link">
         <div class="feature-card">
