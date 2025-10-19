@@ -1,23 +1,17 @@
-File: .streamlit/config.toml
+# File: .streamlit/config.toml
 
 [theme]
-
-Màu nhấn chính cho các widget: Xanh lá cây sáng hơn
-
+# Màu chính cho các widget tương tác (nút bấm, slider...)
 primaryColor="#4CAF50"
 
-Màu nền chính của ứng dụng: Xanh lá cây đậm
+# Màu nền chính của ứng dụng
+backgroundColor="#f0fff3ff"
 
-backgroundColor="#0B2D21"
+# Màu nền phụ (cho sidebar, expander...)
+secondaryBackgroundColor="#bcd8c1ff"
 
-Màu nền phụ (sidebar): Xanh lá cây đậm hơn một chút để tạo chiều sâu
+# Màu chữ chính
+textColor="#000000ff"
 
-secondaryBackgroundColor="#104A37"
-
-Màu chữ chính: Trắng ngà để dễ đọc trên nền tối
-
-textColor="#FAFAFA"
-
-Font chữ
-
+# Font chữ (có thể là 'sans serif', 'serif', hoặc 'monospace')
 font="sans serif"
