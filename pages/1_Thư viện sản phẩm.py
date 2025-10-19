@@ -3,6 +3,22 @@ import pandas as pd
 import base64
 from pathlib import Path
 
+# --- SIDEBAR ---
+# Sử dụng with st.sidebar để thêm nội dung vào thanh bên trái
+with st.sidebar:
+    # Bạn có thể thay thế link này bằng đường dẫn tới logo của bạn trong thư mục /images
+    st.image("images/download.png", use_container_width=True)
+    st.title("Về Viglacera Xanh")
+    st.markdown("""
+    **Cổng thông tin VLXD Xanh** là một sáng kiến của Viglacera nhằm cung cấp kiến thức và công cụ để hỗ trợ các dự án xây dựng bền vững tại Việt Nam.
+    """)
+    st.divider()
+    st.markdown("🔗 **Liên kết hữu ích**")
+    # Link đến trang web chính thức của Viglacera
+    st.link_button("Trang chủ Viglacera 🏠", "https://viglacera.com.vn/", use_container_width=True)
+    # Link đến trang liên hệ trong ứng dụng của bạn
+    st.page_link("pages/4_Tương tác hỗ trợ.py", label="Liên hệ chúng tôi ✉️", use_container_width=True)
+
 # --- HÀM HỖ TRỢ VÀ CALLBACK ---
 def get_image_as_base64(path):
     try:

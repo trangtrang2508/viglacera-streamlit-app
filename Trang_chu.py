@@ -1,5 +1,21 @@
 import streamlit as st
 
+# --- SIDEBAR ---
+# Sử dụng with st.sidebar để thêm nội dung vào thanh bên trái
+with st.sidebar:
+    # Bạn có thể thay thế link này bằng đường dẫn tới logo của bạn trong thư mục /images
+    st.image("images/download.png", use_container_width=True)
+    st.title("Về Viglacera Xanh")
+    st.markdown("""
+    **Cổng thông tin VLXD Xanh** là một sáng kiến của Viglacera nhằm cung cấp kiến thức và công cụ để hỗ trợ các dự án xây dựng bền vững tại Việt Nam.
+    """)
+    st.divider()
+    st.markdown("🔗 **Liên kết hữu ích**")
+    # Link đến trang web chính thức của Viglacera
+    st.link_button("Trang chủ Viglacera 🏠", "https://viglacera.com.vn/", use_container_width=True)
+    # Link đến trang liên hệ trong ứng dụng của bạn
+    st.page_link("pages/4_Tương tác hỗ trợ.py", label="Liên hệ chúng tôi ✉️", use_container_width=True)
+
 # --- CẤU HÌNH TRANG ---
 st.set_page_config(
     page_title="Viglacera VLXD Xanh",
@@ -70,7 +86,7 @@ st.subheader("Khám phá Nền tảng")
 cols = st.columns(3)
 with cols[0]:
     st.markdown("""
-    <a href="Thu_vien_San_pham" target="_self" class="card-link">
+    <a href="Thư viện sản phẩm" target="_self" class="card-link">
         <div class="feature-card">
             <div class="icon">📚</div>
             <h3>Thư viện Sản phẩm</h3>
@@ -81,7 +97,7 @@ with cols[0]:
 
 with cols[1]:
     st.markdown("""
-    <a href="Cong_cu_Ho_tro" target="_self" class="card-link">
+    <a href="Công cụ hỗ trợ" target="_self" class="card-link">
         <div class="feature-card">
             <div class="icon">🛠️</div>
             <h3>Công cụ Hỗ trợ</h3>
@@ -92,7 +108,7 @@ with cols[1]:
 
 with cols[2]:
     st.markdown("""
-    <a href="Thong_tin_Ket_noi" target="_self" class="card-link">
+    <a href="Thông tin kết nối" target="_self" class="card-link">
         <div class="feature-card">
             <div class="icon">🌐</div>
             <h3>Kết nối & Hỗ trợ</h3>
@@ -112,5 +128,5 @@ st.write(
     các sản phẩm chất lượng cao, giảm thiểu tác động đến môi trường, góp phần xây dựng một tương lai bền vững.
     """
 )
-st.page_link("pages/4_Tuong_tac_Ho_tro.py", label="Tìm hiểu thêm và Liên hệ với chúng tôi", icon="➡️")
+st.page_link("pages/4_Tương tác hỗ trợ.py", label="Tìm hiểu thêm và Liên hệ với chúng tôi", icon="➡️")
 
